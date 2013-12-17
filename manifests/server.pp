@@ -7,6 +7,7 @@ class puppetdb::server(
   $ssl_listen_port         = $puppetdb::params::ssl_listen_port,
   $disable_ssl             = $puppetdb::params::disable_ssl,
   $open_ssl_listen_port    = $puppetdb::params::open_ssl_listen_port,
+  $configure_ssl_certs     = $puppetdb::params::configure_ssl_certs,
   $database                = $puppetdb::params::database,
   $database_host           = $puppetdb::params::database_host,
   $database_port           = $puppetdb::params::database_port,
@@ -122,6 +123,16 @@ class puppetdb::server(
           notify => Service[$puppetdb_service],
         })
     )
+  }
+
+  if $configure_ssl_certs {
+    exec { 'puppetdb-ssl-setup':
+      command   => '/usr/sbin/puppetdb-ssl-setup',
+      logoutput => on_failure,
+      creates   => "${confdir}/../ssl/",
+      require   => Package[$puppetdb_package],
+      before    => Service[$puppetdb_service],
+    }
   }
 
   $service_enabled = $puppetdb_service_status ? {
